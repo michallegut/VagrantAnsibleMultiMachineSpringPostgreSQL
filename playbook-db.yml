@@ -1,0 +1,42 @@
+---
+- hosts: db 
+  tasks: 
+  - name: Update all packages to the latest version
+    apt:
+        upgrade: dist
+  - name: Install the package "postgresql"
+    apt:
+        name: postgresql
+  - name: Install the package "python-psycopg2"
+    apt:
+        name: python-psycopg2
+  - name: Create a new database with name "springbootdb"
+    become_user: postgres
+    postgresql_db:
+        name: springbootdb
+  - name: Connect to springbootdb database and set postgres user's password with no expire date, grant privs
+    become_user: postgres
+    postgresql_user:
+        db: springbootdb
+        name: postgres
+        password: postgres@123
+        priv: ALL
+        expires: infinity
+  - name: Copy file postgresql.conf with owner and permissions
+    copy:
+        src: /vagrant/postgresql.conf
+        dest: /etc/postgresql/9.3/main
+        owner: root
+        group: root
+        mode: '0644'
+  - name: Copy file pg_hba.conf with owner and permissions
+    copy:
+        src: /vagrant/pg_hba.conf
+        dest: /etc/postgresql/9.3/main
+        owner: root
+        group: root
+        mode: '0644'
+  - name: Restart service postgresql, in all cases
+    service:
+        name: postgresql
+        state: restarted
